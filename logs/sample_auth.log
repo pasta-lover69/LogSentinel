@@ -1,0 +1,2 @@
+Jun 18 01:22:13 myhost sshd[1993]: Failed password for invalid user admin from 192.168.0.101 port 53742 ssh2
+Jun 18 01:22:15 myhost sshd[1993]: Failed password for root from 192.168.0.102 port 53743 ssh2

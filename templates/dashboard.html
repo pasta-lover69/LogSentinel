@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suspicious Logs</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Suspicious Logs</h1>
+    <ul>
+        {% for log in logs %}
+        <li>{{ log }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
