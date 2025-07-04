@@ -51,11 +51,13 @@
             <i class="fas fa-list"></i>
             Displayed
           </div>
-        </div>
-        <div class="stat-card">
+        </div>        <div class="stat-card">
           <div class="stat-number">
-            {% if logs %} {{ logs[0][2].split(' ')[0] if logs[0][2] else 'N/A'
-            }} {% else %} N/A {% endif %}
+            {% if logs %}
+              {{ format_date_only(logs[0][2]) }}
+            {% else %}
+              Never
+            {% endif %}
           </div>
           <div class="stat-label">
             <i class="fas fa-calendar"></i>
@@ -103,11 +105,10 @@
               <td>{{ log[0] }}</td>
               <td>
                 <div class="log-entry">{{ log[1] }}</div>
-              </td>
-              <td>
+              </td>              <td>
                 <div class="timestamp">
                   <i class="fas fa-clock"></i>
-                  {{ log[2] if log[2] else 'Unknown' }}
+                  {{ format_timestamp(log[2]) }}
                 </div>
               </td>
               <td>

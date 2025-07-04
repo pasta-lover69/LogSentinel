@@ -65,6 +65,16 @@ body {
     font-weight: bold;
     color: #e74c3c;
     margin-bottom: 10px;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.stat-card:last-child .stat-number {
+    font-size: 1.8em;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .stat-label {
