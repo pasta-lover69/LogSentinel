@@ -1,22 +1,35 @@
 import sqlite3
+from datetime import datetime
 
 DB_NAME = "suspicious_logs.db"
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
+    
+    # Create table with basic structure first
     c.execute('''CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    log TEXT,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    log TEXT
                 )''')
+    
+    # Check if timestamp column exists, if not add it
+    c.execute("PRAGMA table_info(logs)")
+    columns = [column[1] for column in c.fetchall()]
+    
+    if 'timestamp' not in columns:
+        c.execute('ALTER TABLE logs ADD COLUMN timestamp DATETIME')
+        # Update existing rows with current timestamp
+        c.execute('UPDATE logs SET timestamp = ? WHERE timestamp IS NULL', (datetime.now().isoformat(),))
+    
     conn.commit()
     conn.close()
 
 def save_suspicious_log(log_entry):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("INSERT INTO logs (log) VALUES (?)", (log_entry,))
+    current_time = datetime.now().isoformat()
+    c.execute("INSERT INTO logs (log, timestamp) VALUES (?, ?)", (log_entry, current_time))
     conn.commit()
     conn.close()
 
@@ -24,7 +37,16 @@ def get_all_logs():
     """Retrieve all suspicious logs from the database"""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("SELECT id, log, timestamp FROM logs ORDER BY timestamp DESC")
+    
+    # Check if timestamp column exists
+    c.execute("PRAGMA table_info(logs)")
+    columns = [column[1] for column in c.fetchall()]
+    
+    if 'timestamp' in columns:
+        c.execute("SELECT id, log, timestamp FROM logs ORDER BY timestamp DESC")
+    else:
+        c.execute("SELECT id, log, 'N/A' as timestamp FROM logs ORDER BY id DESC")
+    
     logs = c.fetchall()
     conn.close()
     return logs
