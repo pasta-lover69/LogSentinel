@@ -1,15 +1,153 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Suspicious Logs</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <h1>Suspicious Logs</h1>
-    <ul>
-        {% for log in logs %}
-        <li>{{ log }}</li>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LogSentinel - Security Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header Section -->
+      <div class="header">
+        <h1><i class="fas fa-shield-alt"></i> LogSentinel</h1>
+        <p>Security Log Monitoring Dashboard</p>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+          <i
+            class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"
+          ></i>
+          {{ message }}
+        </div>
         {% endfor %}
-    </ul>
-</body>
+      </div>
+      {% endif %} {% endwith %}
+
+      <!-- Statistics Section -->
+      <div class="stats-section">
+        <div class="stat-card">
+          <div class="stat-number">{{ total_count }}</div>
+          <div class="stat-label">
+            <i class="fas fa-exclamation-triangle"></i>
+            Suspicious Logs
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ logs|length }}</div>
+          <div class="stat-label">
+            <i class="fas fa-list"></i>
+            Displayed
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">
+            {% if logs %} {{ logs[0][2].split(' ')[0] if logs[0][2] else 'N/A'
+            }} {% else %} N/A {% endif %}
+          </div>
+          <div class="stat-label">
+            <i class="fas fa-calendar"></i>
+            Last Detection
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Section -->
+      <div class="actions-section">
+        <a href="{{ url_for('scan_logs') }}" class="btn btn-primary">
+          <i class="fas fa-search"></i> Scan Logs
+        </a>
+        {% if logs %}
+        <form
+          method="POST"
+          action="{{ url_for('clear_all') }}"
+          style="display: inline"
+          onsubmit="return confirm('Are you sure you want to clear all logs?');"
+        >
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Clear All Logs
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+      <!-- Logs Section -->
+      <div class="logs-section">
+        <h2><i class="fas fa-list-ul"></i> Suspicious Log Entries</h2>
+
+        {% if logs %}
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Log Entry</th>
+              <th>Timestamp</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+            <tr>
+              <td>{{ log[0] }}</td>
+              <td>
+                <div class="log-entry">{{ log[1] }}</div>
+              </td>
+              <td>
+                <div class="timestamp">
+                  <i class="fas fa-clock"></i>
+                  {{ log[2] if log[2] else 'Unknown' }}
+                </div>
+              </td>
+              <td>
+                <a
+                  href="{{ url_for('delete_log_entry', log_id=log[0]) }}"
+                  class="btn btn-danger btn-small"
+                  onclick="return confirm('Are you sure you want to delete this log?');"
+                >
+                  <i class="fas fa-trash"></i> Delete
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <h3>No suspicious logs detected</h3>
+          <p>
+            Click "Scan Logs" to analyze your log files for suspicious
+            activities.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <script>
+      // Auto-hide flash messages after 5 seconds
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll(".flash-message");
+        flashMessages.forEach(function (message) {
+          message.style.opacity = "0";
+          message.style.transition = "opacity 0.5s ease";
+          setTimeout(function () {
+            message.remove();
+          }, 500);
+        });
+      }, 5000);
+    </script>
+  </body>
 </html>
