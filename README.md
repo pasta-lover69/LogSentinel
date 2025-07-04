@@ -54,7 +54,7 @@ pip install -r requirements.txt
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/logsentinel.git
+git clone https://github.com/pasta-lover69/LogSentinel.git
 cd logsentinel
 ```
 
