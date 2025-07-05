@@ -62,13 +62,57 @@
             Last Detection
           </div>
         </div>
+        <div class="stat-card">
+          <div class="stat-number">
+            {% if monitoring_status.is_monitoring %}
+              <span class="status-active">ACTIVE</span>
+            {% else %}
+              <span class="status-inactive">STOPPED</span>
+            {% endif %}
+          </div>
+          <div class="stat-label">
+            <i class="fas fa-eye"></i>
+            Real-time Monitor
+          </div>
+        </div>
       </div>
+
+      <!-- Real-time Alerts Section -->
+      {% if recent_alerts %}
+      <div class="alerts-section">
+        <h3><i class="fas fa-bell"></i> Recent Real-time Alerts</h3>
+        <div class="alerts-container">
+          {% for alert in recent_alerts %}
+          <div class="alert-item">
+            <div class="alert-time">{{ alert.formatted_time }}</div>
+            <div class="alert-content">{{ alert.log_entry }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        <form method="POST" action="{{ url_for('clear_recent_alerts') }}" style="margin-top: 10px;">
+          <button type="submit" class="btn btn-danger btn-small">
+            <i class="fas fa-times"></i> Clear Alerts
+          </button>
+        </form>
+      </div>
+      {% endif %}
 
       <!-- Actions Section -->
       <div class="actions-section">
         <a href="{{ url_for('scan_logs') }}" class="btn btn-primary">
           <i class="fas fa-search"></i> Scan Logs
         </a>
+        
+        {% if monitoring_status.is_monitoring %}
+          <a href="{{ url_for('stop_monitoring_route') }}" class="btn btn-warning">
+            <i class="fas fa-stop"></i> Stop Real-time Monitor
+          </a>
+        {% else %}
+          <a href="{{ url_for('start_monitoring_route') }}" class="btn btn-success">
+            <i class="fas fa-play"></i> Start Real-time Monitor
+          </a>
+        {% endif %}
+        
         {% if logs %}
         <form
           method="POST"
@@ -148,6 +192,35 @@
           }, 500);
         });
       }, 5000);
+
+      // Auto-refresh alerts every 10 seconds if monitoring is active
+      {% if monitoring_status.is_monitoring %}
+      function updateAlerts() {
+        fetch('/api/alerts')
+          .then(response => response.json())
+          .then(data => {
+            if (data.alerts && data.alerts.length > 0) {
+              // Update alerts section (simplified - full implementation would update DOM)
+              console.log(`Real-time monitoring active: ${data.alerts.length} recent alerts`);
+              
+              // Show notification for new alerts
+              if (data.total_count > {{ recent_alerts|length }}) {
+                // New alert detected
+                console.log('New suspicious activity detected!');
+              }
+            }
+          })
+          .catch(error => console.log('Error fetching alerts:', error));
+      }
+
+      // Update alerts every 10 seconds
+      setInterval(updateAlerts, 10000);
+      
+      // Show monitoring status
+      console.log('Real-time monitoring is ACTIVE - watching for suspicious activities...');
+      {% else %}
+      console.log('Real-time monitoring is STOPPED - click "Start Real-time Monitor" to enable');
+      {% endif %}
     </script>
   </body>
 </html>
