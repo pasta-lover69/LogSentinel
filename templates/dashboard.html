@@ -65,9 +65,9 @@
         <div class="stat-card">
           <div class="stat-number">
             {% if monitoring_status.is_monitoring %}
-              <span class="status-active">ACTIVE</span>
+            <span class="status-active">ACTIVE</span>
             {% else %}
-              <span class="status-inactive">STOPPED</span>
+            <span class="status-inactive">STOPPED</span>
             {% endif %}
           </div>
           <div class="stat-label">
@@ -89,7 +89,11 @@
           </div>
           {% endfor %}
         </div>
-        <form method="POST" action="{{ url_for('clear_recent_alerts') }}" style="margin-top: 10px;">
+        <form
+          method="POST"
+          action="{{ url_for('clear_recent_alerts') }}"
+          style="margin-top: 10px"
+        >
           <button type="submit" class="btn btn-danger btn-small">
             <i class="fas fa-times"></i> Clear Alerts
           </button>
@@ -102,18 +106,22 @@
         <a href="{{ url_for('scan_logs') }}" class="btn btn-primary">
           <i class="fas fa-search"></i> Scan Logs
         </a>
-        
+
         {% if monitoring_status.is_monitoring %}
-          <a href="{{ url_for('stop_monitoring_route') }}" class="btn btn-warning">
-            <i class="fas fa-stop"></i> Stop Real-time Monitor
-          </a>
+        <a
+          href="{{ url_for('stop_monitoring_route') }}"
+          class="btn btn-warning"
+        >
+          <i class="fas fa-stop"></i> Stop Real-time Monitor
+        </a>
         {% else %}
-          <a href="{{ url_for('start_monitoring_route') }}" class="btn btn-success">
-            <i class="fas fa-play"></i> Start Real-time Monitor
-          </a>
-        {% endif %}
-        
-        {% if logs %}
+        <a
+          href="{{ url_for('start_monitoring_route') }}"
+          class="btn btn-success"
+        >
+          <i class="fas fa-play"></i> Start Real-time Monitor
+        </a>
+        {% endif %} {% if logs %}
         <form
           method="POST"
           action="{{ url_for('clear_all') }}"
@@ -202,7 +210,7 @@
             if (data.alerts && data.alerts.length > 0) {
               // Update alerts section (simplified - full implementation would update DOM)
               console.log(`Real-time monitoring active: ${data.alerts.length} recent alerts`);
-              
+
               // Show notification for new alerts
               if (data.total_count > {{ recent_alerts|length }}) {
                 // New alert detected
@@ -215,7 +223,7 @@
 
       // Update alerts every 10 seconds
       setInterval(updateAlerts, 10000);
-      
+
       // Show monitoring status
       console.log('Real-time monitoring is ACTIVE - watching for suspicious activities...');
       {% else %}

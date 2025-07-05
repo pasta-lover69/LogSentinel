@@ -7,9 +7,9 @@ import os
 import atexit
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this'  # Change this to a random secret key
+app.secret_key = 'LogSentByJeb'
 
-# Real-time notifications storage (in production, use Redis or database)
+# Real-time notifications storage
 recent_alerts = []
 MAX_RECENT_ALERTS = 50
 

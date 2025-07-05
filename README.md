@@ -7,6 +7,7 @@ A comprehensive Python-based security log monitoring tool with a modern web dash
 ## 🚀 Features
 
 ### Core Functionality
+
 - **Smart Log Parsing**: Analyzes Linux system logs (e.g. `/var/log/auth.log`)
 - **Advanced Detection**: Identifies suspicious activities including:
   - Failed login attempts
@@ -17,6 +18,7 @@ A comprehensive Python-based security log monitoring tool with a modern web dash
 - **Extensible Architecture**: Easy to add new detection rules
 
 ### Real-time Monitoring 🔴
+
 - **File Watchers**: Automatically monitors log files for new entries
 - **Instant Detection**: Real-time analysis of new log entries as they're written
 - **Live Alerts**: Immediate notifications when suspicious activities are detected
@@ -24,9 +26,10 @@ A comprehensive Python-based security log monitoring tool with a modern web dash
 - **Status Tracking**: Visual indicators for monitoring state (ACTIVE/STOPPED)
 
 ### Web Dashboard 🌐
+
 - **Modern UI**: Beautiful, responsive web interface
 - **Real-time Statistics**: Live counts and detection metrics
-- **Interactive Management**: 
+- **Interactive Management**:
   - View all suspicious logs in a sortable table
   - Delete individual entries
   - Clear all logs with confirmation
@@ -128,11 +131,13 @@ http://127.0.0.1:5000
 ### Option 2: Real-time Monitoring (CLI) 🔴
 
 4. **Start real-time monitoring directly**
+
 ```bash
 python monitor.py
 ```
 
 5. **Test real-time detection**
+
 ```bash
 # In another terminal, run the test script
 python test_realtime.py
@@ -141,6 +146,7 @@ python test_realtime.py
 ### Option 3: Command Line Scanner
 
 4. **Run the command-line scanner**
+
 ```bash
 python main.py
 ```
@@ -152,18 +158,21 @@ You will see suspicious entries printed to console and stored in `suspicious_log
 ## 🔴 Real-time Monitoring Features
 
 ### Automatic File Watching
+
 - **Continuous Monitoring**: Watches log files 24/7 for new entries
 - **Instant Processing**: Analyzes new log lines immediately as they're written
 - **Smart Positioning**: Tracks file positions to avoid re-processing existing content
 - **File Rotation Support**: Handles log file rotation and new file creation
 
 ### Live Alert System
+
 - **Real-time Notifications**: Instant alerts when suspicious activities are detected
 - **Alert History**: Recent alerts displayed in the dashboard
 - **Background Processing**: Works silently in the background
 - **Zero Configuration**: Automatically starts monitoring when dashboard launches
 
 ### Monitoring Controls
+
 - **Start/Stop Controls**: Easy toggle buttons in web dashboard
 - **Status Indicators**: Visual display of monitoring state (ACTIVE/STOPPED)
 - **File Status**: Shows which files are being monitored
@@ -174,18 +183,21 @@ You will see suspicious entries printed to console and stored in `suspicious_log
 ## 🎯 Dashboard Features
 
 ### Statistics Dashboard
+
 - **Total Suspicious Logs**: Real-time count of all detected threats
-- **Currently Displayed**: Number of logs shown in current view  
+- **Currently Displayed**: Number of logs shown in current view
 - **Last Detection**: Smart timestamp showing when the most recent threat was detected
 - **Monitor Status**: Live indicator showing real-time monitoring state
 
 ### Real-time Alert Feed 🚨
+
 - **Live Alerts**: Recent suspicious activities detected in real-time
 - **Instant Updates**: New threats appear immediately without page refresh
 - **Alert Management**: Clear recent alerts with one click
 - **Timestamp Display**: Shows exactly when each threat was detected
 
 ### Interactive Log Management
+
 - **Sortable Table**: View all logs with ID, content, and timestamp
 - **Smart Timestamps**: Human-readable time display (e.g., "2 hours ago", "Yesterday")
 - **Individual Actions**: Delete specific log entries with confirmation
@@ -260,14 +272,16 @@ python migrate_db.py
 The web dashboard provides several endpoints:
 
 **Core Dashboard:**
+
 - `GET /` - Main dashboard with real-time status
 - `GET /scan` - Trigger log scan
 - `GET /delete/<id>` - Delete specific log entry
 - `POST /clear_all` - Clear all logs
 
 **Real-time Monitoring:**
+
 - `GET /monitoring/start` - Start real-time monitoring
-- `GET /monitoring/stop` - Stop real-time monitoring  
+- `GET /monitoring/stop` - Stop real-time monitoring
 - `GET /monitoring/status` - Get monitoring status (JSON)
 - `GET /api/alerts` - Get recent alerts (JSON)
 - `POST /clear_alerts` - Clear recent alerts
@@ -291,7 +305,7 @@ Watch the dashboard for real-time alerts as the test script adds suspicious entr
 ## 🧩 Feature Status
 
 - ✅ ~~Web dashboard to view logs~~ **COMPLETED**
-- ✅ ~~Real-time statistics~~ **COMPLETED** 
+- ✅ ~~Real-time statistics~~ **COMPLETED**
 - ✅ ~~Interactive log management~~ **COMPLETED**
 - ✅ ~~Real-time log monitoring with file watchers~~ **COMPLETED**
 - 🔄 Log upload interface for remote files
@@ -373,29 +387,33 @@ LogSentinel is designed for educational purposes and legitimate security monitor
 ## 💡 Getting Help
 
 ### Quick Start Issues?
+
 1. Ensure Python 3.7+ is installed
 2. Check that Flask and Watchdog are properly installed: `pip list | grep -E "(Flask|watchdog)"`
 3. Verify log file exists in `logs/` directory
 4. Make sure port 5000 is available
 
 ### Common Issues
+
 - **Database errors**: Run `python migrate_db.py` to fix schema issues
-- **Port conflicts**: Change port in `app.py` if 5000 is in use  
+- **Port conflicts**: Change port in `app.py` if 5000 is in use
 - **Permission errors**: Ensure read access to log files
 - **Real-time monitoring not working**: Check that `watchdog` is installed and log files are in the `logs/` directory
 - **Threading errors**: Real-time monitoring may conflict with Flask debug mode on some systems
 
 ### Real-time Monitoring Troubleshooting
+
 - **Monitor shows "STOPPED"**: Click "Start Real-time Monitor" in the dashboard
 - **No real-time alerts**: Ensure log files are being written to the `logs/` directory
 - **Test monitoring**: Use `python test_realtime.py` to simulate suspicious entries
 - **Check status**: Visit `/monitoring/status` endpoint for detailed monitoring information
 
 ### Support
+
 - 📖 Check the [Issues](https://github.com/pasta-lover69/LogSentinel/issues) page
 - 💬 Open a new issue for bugs or questions
 - 📧 Contact the author for security-related concerns
 
 ---
 
-*LogSentinel - Your vigilant guardian against suspicious activities with real-time monitoring* 🛡️✨🔴
+_LogSentinel - Your vigilant guardian against suspicious activities with real-time monitoring_ 🛡️✨🔴
