@@ -3,9 +3,11 @@ from werkzeug.utils import secure_filename
 from db import init_db, get_all_logs, get_logs_count, delete_log, clear_all_logs, save_suspicious_log
 from parser import parse_logs, is_suspicious
 from monitor import start_monitoring, stop_monitoring, is_monitoring, get_monitoring_status
+from notifications import NotificationConfig, NotificationManager
 from datetime import datetime
 import os
 import atexit
+import json
 
 app = Flask(__name__)
 app.secret_key = 'LogSentByJeb'
@@ -20,6 +22,19 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
 # Ensure upload directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Notification configuration file
+CONFIG_FILE = 'notification_config.json'
+
+# Initialize notification system
+try:
+    notification_config = NotificationConfig.load_from_file(CONFIG_FILE)
+except FileNotFoundError:
+    # Create default configuration if file doesn't exist
+    notification_config = NotificationConfig()
+    notification_config.save_to_file(CONFIG_FILE)
+
+notification_manager = NotificationManager(notification_config)
 
 # Real-time notifications storage
 recent_alerts = []
@@ -37,6 +52,12 @@ def monitoring_callback(log_entry):
     # Keep only recent alerts
     if len(recent_alerts) > MAX_RECENT_ALERTS:
         recent_alerts = recent_alerts[:MAX_RECENT_ALERTS]
+    
+    # Send notifications for this alert
+    try:
+        notification_manager.send_security_alert(log_entry)
+    except Exception as e:
+        print(f"[NOTIFICATION] Error sending alert: {e}")
 
 def format_timestamp(timestamp_str):
     """Format timestamp to a more readable format"""
@@ -111,6 +132,114 @@ def dashboard():
                          monitoring_status=monitoring_status,
                          recent_alerts=recent_alerts[:10])  # Show last 10 alerts
 
+@app.route('/settings')
+def settings():
+    """Notification settings page"""
+    return render_template('settings.html', config=notification_config)
+
+@app.route('/update_email_settings', methods=['POST'])
+def update_email_settings():
+    """Update email notification settings"""
+    try:
+        # Update email configuration
+        notification_config.email.smtp_server = request.form.get('smtp_server', '')
+        notification_config.email.smtp_port = int(request.form.get('smtp_port', 587))
+        notification_config.email.username = request.form.get('username', '')
+        notification_config.email.from_email = request.form.get('from_email', '')
+        notification_config.email.use_tls = 'use_tls' in request.form
+        notification_config.email.enabled = 'email_enabled' in request.form
+        
+        # Handle password (only update if provided)
+        password = request.form.get('password', '')
+        if password:
+            notification_config.email.password = password
+        
+        # Handle to_emails (comma-separated list)
+        to_emails = request.form.get('to_emails', '')
+        notification_config.email.to_emails = [email.strip() for email in to_emails.split(',') if email.strip()]
+        
+        # Save configuration
+        notification_config.save_to_file(CONFIG_FILE)
+        
+        # Update notification manager
+        global notification_manager
+        notification_manager = NotificationManager(notification_config)
+        
+        flash('Email settings updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating email settings: {str(e)}', 'error')
+    
+    return redirect(url_for('settings'))
+
+@app.route('/update_slack_settings', methods=['POST'])
+def update_slack_settings():
+    """Update Slack notification settings"""
+    try:
+        # Update Slack configuration
+        notification_config.slack.webhook_url = request.form.get('webhook_url', '')
+        notification_config.slack.channel = request.form.get('channel', '')
+        notification_config.slack.username = request.form.get('slack_username', '')
+        notification_config.slack.enabled = 'slack_enabled' in request.form
+        
+        # Save configuration
+        notification_config.save_to_file(CONFIG_FILE)
+        
+        # Update notification manager
+        global notification_manager
+        notification_manager = NotificationManager(notification_config)
+        
+        flash('Slack settings updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating Slack settings: {str(e)}', 'error')
+    
+    return redirect(url_for('settings'))
+
+@app.route('/update_general_settings', methods=['POST'])
+def update_general_settings():
+    """Update general notification settings"""
+    try:
+        # Update general settings
+        notification_config.alert_settings.min_severity = request.form.get('min_severity', 'medium')
+        notification_config.alert_settings.max_alerts_per_hour = int(request.form.get('max_alerts_per_hour', 10))
+        notification_config.alert_settings.batch_alerts = 'batch_alerts' in request.form
+        
+        # Save configuration
+        notification_config.save_to_file(CONFIG_FILE)
+        
+        # Update notification manager
+        global notification_manager
+        notification_manager = NotificationManager(notification_config)
+        
+        flash('General settings updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating general settings: {str(e)}', 'error')
+    
+    return redirect(url_for('settings'))
+
+@app.route('/test_email_config', methods=['POST'])
+def test_email_config():
+    """Send a test email to verify configuration"""
+    try:
+        success = notification_manager.send_test_email()
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to send test email'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/test_slack_config', methods=['POST'])
+def test_slack_config():
+    """Send a test Slack message to verify configuration"""
+    try:
+        success = notification_manager.send_test_slack()
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to send test Slack message'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/scan')
 def scan_logs():
     """Scan logs and detect suspicious activities"""
@@ -147,7 +276,7 @@ def start_monitoring_route():
     """Start real-time monitoring"""
     try:
         if not is_monitoring():
-            start_monitoring(callback=monitoring_callback)
+            start_monitoring(callback=monitoring_callback, notification_manager=notification_manager)
             flash('Real-time monitoring started successfully!', 'success')
         else:
             flash('Real-time monitoring is already active.', 'info')
@@ -225,6 +354,12 @@ def process_uploaded_file(file_path, original_filename):
                     recent_alerts.insert(0, alert)
                     if len(recent_alerts) > MAX_RECENT_ALERTS:
                         recent_alerts = recent_alerts[:MAX_RECENT_ALERTS]
+                    
+                    # Send notification for uploaded file threat
+                    try:
+                        notification_manager.send_security_alert(enhanced_entry)
+                    except Exception as e:
+                        print(f"[NOTIFICATION] Error sending upload alert: {e}")
         
         return {
             'success': True,
@@ -331,7 +466,7 @@ if __name__ == '__main__':
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         # This is the main process, not the reloader
         try:
-            start_monitoring(callback=monitoring_callback)
+            start_monitoring(callback=monitoring_callback, notification_manager=notification_manager)
             print("[APP] Real-time monitoring started automatically")
         except Exception as e:
             print(f"[APP] Could not start monitoring: {e}")
