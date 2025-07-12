@@ -1,6 +1,7 @@
 """
 Real-time log monitoring with file watchers
 Automatically detects and processes new suspicious log entries as they're written to files
+Enhanced with notification system integration
 """
 
 import os
@@ -12,12 +13,16 @@ from db import save_suspicious_log
 import threading
 import sys
 
+# Import notification system - moved to function level to avoid circular imports
+NOTIFICATIONS_AVAILABLE = True
+
 class LogEventHandler(FileSystemEventHandler):
     """Handler for file system events on log files"""
     
-    def __init__(self, callback=None):
+    def __init__(self, callback=None, notification_manager=None):
         super().__init__()
         self.callback = callback
+        self.notification_manager = notification_manager
         self.file_positions = {}  # Track file positions to avoid re-reading
         
     def on_modified(self, event):
@@ -72,6 +77,28 @@ class LogEventHandler(FileSystemEventHandler):
                         print(f"[REAL-TIME] Suspicious activity detected: {line}")
                         save_suspicious_log(line)
                         
+                        # Send notifications if notification manager available
+                        if self.notification_manager:
+                            try:
+                                # Determine threat level based on log content
+                                threat_level = self._assess_threat_level(line)
+                                
+                                # Extract additional info
+                                additional_info = self._extract_log_info(line, file_path)
+                                
+                                # Send notification
+                                notification_results = self.notification_manager.send_security_alert(
+                                    line, 
+                                    threat_level, 
+                                    additional_info
+                                )
+                                
+                                if notification_results.get('email') or notification_results.get('slack'):
+                                    print(f"[NOTIFICATIONS] Alert sent - Email: {notification_results.get('email')}, Slack: {notification_results.get('slack')}")
+                                
+                            except Exception as e:
+                                print(f"[ERROR] Notification error: {e}")
+                        
                         # Call callback if provided (for web notifications)
                         if self.callback:
                             try:
@@ -81,6 +108,61 @@ class LogEventHandler(FileSystemEventHandler):
                             
         except Exception as e:
             print(f"[ERROR] Error processing {file_path}: {e}")
+    
+    def _assess_threat_level(self, log_entry: str) -> str:
+        """Assess the threat level of a suspicious log entry"""
+        log_lower = log_entry.lower()
+        
+        # Critical threats
+        if any(keyword in log_lower for keyword in [
+            'root', 'administrator', 'admin', 'sudo', 'privilege'
+        ]):
+            return "critical"
+        
+        # High threats  
+        if any(keyword in log_lower for keyword in [
+            'failed password', 'authentication failure', 'login failed',
+            'access denied', 'unauthorized', 'invalid user'
+        ]):
+            return "high"
+        
+        # Medium threats
+        if any(keyword in log_lower for keyword in [
+            'connection refused', 'timeout', 'error'
+        ]):
+            return "medium"
+        
+        # Default to medium
+        return "medium"
+    
+    def _extract_log_info(self, log_entry: str, file_path: str) -> dict:
+        """Extract additional information from log entry"""
+        info = {
+            "source_file": os.path.basename(file_path),
+            "log_type": "authentication" if "ssh" in log_entry.lower() else "system"
+        }
+        
+        # Try to extract IP address
+        import re
+        ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+        ip_match = re.search(ip_pattern, log_entry)
+        if ip_match:
+            info["source_ip"] = ip_match.group()
+        
+        # Try to extract username
+        if "user" in log_entry.lower():
+            user_pattern = r'(?:user|for)\s+(\w+)'
+            user_match = re.search(user_pattern, log_entry, re.IGNORECASE)
+            if user_match:
+                info["target_user"] = user_match.group(1)
+        
+        # Try to extract port
+        port_pattern = r'port\s+(\d+)'
+        port_match = re.search(port_pattern, log_entry, re.IGNORECASE)
+        if port_match:
+            info["port"] = port_match.group(1)
+        
+        return info
 
 class LogMonitor:
     """Real-time log monitoring manager"""
@@ -173,11 +255,13 @@ def get_monitor():
         _monitor = LogMonitor()
     return _monitor
 
-def start_monitoring(callback=None):
+def start_monitoring(callback=None, notification_manager=None):
     """Start monitoring with optional callback for real-time notifications"""
     monitor = get_monitor()
     if callback:
         monitor.event_handler.callback = callback
+    if notification_manager:
+        monitor.event_handler.notification_manager = notification_manager
     monitor.start_monitoring()
     return monitor
 
