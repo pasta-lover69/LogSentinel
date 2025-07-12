@@ -524,7 +524,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🙋‍♂️ Author
 
 **pasta-lover69** – Aspiring Cybersecurity Analyst  
-🔗 [GitHub](https://github.com/pasta-lover69) | 📧 [Contact](mailto:your-email@example.com)
+🔗 [GitHub](https://github.com/pasta-lover69) | 📧 [Contact](mailto:pastalover6999@gmail.com)
 
 Built with ❤️ for the cybersecurity community and security enthusiasts worldwide.
 
