@@ -106,6 +106,14 @@
         <a href="{{ url_for('scan_logs') }}" class="btn btn-primary">
           <i class="fas fa-search"></i> Scan Logs
         </a>
+        
+        <a href="{{ url_for('upload_file') }}" class="btn btn-info">
+          <i class="fas fa-cloud-upload-alt"></i> Upload Logs
+        </a>
+        
+        <a href="{{ url_for('uploaded_files') }}" class="btn btn-secondary">
+          <i class="fas fa-folder-open"></i> View Uploads
+        </a>
 
         {% if monitoring_status.is_monitoring %}
         <a

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from db import init_db, get_all_logs, get_logs_count, delete_log, clear_all_logs
-from parser import parse_logs
+from werkzeug.utils import secure_filename
+from db import init_db, get_all_logs, get_logs_count, delete_log, clear_all_logs, save_suspicious_log
+from parser import parse_logs, is_suspicious
 from monitor import start_monitoring, stop_monitoring, is_monitoring, get_monitoring_status
 from datetime import datetime
 import os
@@ -8,6 +9,17 @@ import atexit
 
 app = Flask(__name__)
 app.secret_key = 'LogSentByJeb'
+
+# Upload configuration
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'log', 'txt', 'out'}
+MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB limit
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
+
+# Ensure upload directory exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Real-time notifications storage
 recent_alerts = []
@@ -179,6 +191,137 @@ def clear_recent_alerts():
     recent_alerts = []
     flash('Recent alerts cleared!', 'success')
     return redirect(url_for('dashboard'))
+
+def allowed_file(filename):
+    """Check if the uploaded file has an allowed extension"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def process_uploaded_file(file_path, original_filename):
+    """Process uploaded log file and detect suspicious entries"""
+    suspicious_count = 0
+    total_lines = 0
+    errors = []
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            for line_num, line in enumerate(f, 1):
+                total_lines += 1
+                line = line.strip()
+                
+                if line and is_suspicious(line):
+                    # Add source information to the log entry
+                    enhanced_entry = f"[UPLOADED:{original_filename}] {line}"
+                    save_suspicious_log(enhanced_entry)
+                    suspicious_count += 1
+                    
+                    # Add to recent alerts for real-time display
+                    global recent_alerts
+                    alert = {
+                        'timestamp': datetime.now().isoformat(),
+                        'log_entry': enhanced_entry,
+                        'formatted_time': 'Just now'
+                    }
+                    recent_alerts.insert(0, alert)
+                    if len(recent_alerts) > MAX_RECENT_ALERTS:
+                        recent_alerts = recent_alerts[:MAX_RECENT_ALERTS]
+        
+        return {
+            'success': True,
+            'suspicious_count': suspicious_count,
+            'total_lines': total_lines,
+            'errors': errors
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e),
+            'suspicious_count': 0,
+            'total_lines': 0
+        }
+
+# File upload route
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    """Handle file upload for remote log files"""
+    if request.method == 'POST':
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file selected', 'error')
+            return redirect(request.url)
+        
+        file = request.files['file']
+        
+        # If user does not select file, browser also submits an empty part without filename
+        if file.filename == '':
+            flash('No file selected', 'error')
+            return redirect(request.url)
+        
+        if file and allowed_file(file.filename):
+            try:
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"{timestamp}_{filename}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                
+                # Save the uploaded file
+                file.save(file_path)
+                
+                # Process the uploaded file for suspicious activities
+                suspicious_count = process_uploaded_file(file_path, file.filename)
+                
+                flash(f'File "{file.filename}" uploaded successfully! Found {suspicious_count} suspicious activities.', 'success')
+                return redirect(url_for('dashboard'))
+                
+            except Exception as e:
+                flash(f'Error processing file: {str(e)}', 'error')
+                return redirect(request.url)
+        else:
+            flash('Invalid file type. Only .log, .txt, and .out files are allowed.', 'error')
+            return redirect(request.url)
+    
+    return render_template('upload.html')
+
+@app.route('/uploads')
+def uploaded_files():
+    """Display list of uploaded files"""
+    try:
+        upload_folder = app.config['UPLOAD_FOLDER']
+        if not os.path.exists(upload_folder):
+            files = []
+        else:
+            files = []
+            for filename in os.listdir(upload_folder):
+                if os.path.isfile(os.path.join(upload_folder, filename)):
+                    file_path = os.path.join(upload_folder, filename)
+                    stat = os.stat(file_path)
+                    files.append({
+                        'name': filename,
+                        'size': stat.st_size,
+                        'modified': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    })
+            files.sort(key=lambda x: x['modified'], reverse=True)
+        
+        return render_template('uploads.html', files=files)
+    except Exception as e:
+        flash(f'Error loading uploaded files: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/delete_upload/<filename>', methods=['POST'])
+def delete_upload(filename):
+    """Delete an uploaded file"""
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            flash(f'File "{filename}" deleted successfully!', 'success')
+        else:
+            flash(f'File "{filename}" not found!', 'error')
+    except Exception as e:
+        flash(f'Error deleting file: {str(e)}', 'error')
+    
+    return redirect(url_for('uploaded_files'))
 
 if __name__ == '__main__':
     init_db()
