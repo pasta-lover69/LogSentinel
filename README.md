@@ -4,8 +4,37 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
 [![Real-time Monitoring](https://img.shields.io/badge/Real--time-Monitoring-red.svg)](https://github.com/pasta-lover69/LogSentinel)
+[![Email & Slack Alerts](https://img.shields.io/badge/Email%20%26%20Slack-Alerts-orange.svg)](https://github.com/pasta-lover69/LogSentinel)
 
-A comprehensive Python-based security log monitoring tool with a modern web dashboard for detecting and managing suspicious system log entries. Built for cybersecurity learning, professional monitoring, and enterprise security operations with a roadmap towards AI-powered threat intelligence and global security collaboration.
+A comprehensive Python-based security log monitoring tool with a modern web dashboard and real-time email/Slack notifications for detecting and managing suspicious system log entries. Built for cybersecurity learning, professional monitoring, and enterprise security operations with intelligent threat detection and instant alerting capabilities.---
+
+## 🎉 Recent Updates
+
+### Version 2.0 - Notification System Release
+**Latest Enhancement: Comprehensive Email & Slack Notifications**
+
+- ✨ **Email Notifications**: Professional HTML email alerts with threat severity indicators
+- ✨ **Slack Integration**: Rich Slack messages with emoji indicators and threat details  
+- ✨ **Settings Interface**: Beautiful web-based configuration for all notification settings
+- ✨ **Test Functionality**: Built-in test buttons to verify email and Slack configuration
+- ✨ **Rate Limiting**: Configurable alert limits to prevent notification spam
+- ✨ **Threat Filtering**: Set minimum severity levels for notifications
+- ✨ **Template System**: Cleaned up HTML templates with inheritance (32% code reduction)
+- ✨ **Enhanced UI**: Added Settings page with tabbed interface for notification management
+
+**What's New:**
+- Navigate to **Settings** in the web dashboard to configure notifications
+- Real-time alerts now send both email and Slack notifications instantly
+- File upload processing triggers notifications for detected threats
+- Professional email templates with color-coded threat levels
+- Rich Slack messages with timestamp and source information
+
+---
+
+## 👤 Author
+
+**pasta-lover69** – Aspiring Cybersecurity Analyst  
+🔗 [GitHub](https://github.com/pasta-lover69) | 📧 [Contact](mailto:pastalover6999@gmail.com)log entries. Built for cybersecurity learning, professional monitoring, and enterprise security operations with a roadmap towards AI-powered threat intelligence and global security collaboration.
 
 ---
 
@@ -45,6 +74,31 @@ A comprehensive Python-based security log monitoring tool with a modern web dash
 - **Flash Messaging**: User feedback for all actions
 - **Mobile Responsive**: Works perfectly on desktop and mobile devices
 
+### Notification System 🔔
+
+- **Email Alerts**: Professional HTML email notifications with threat severity indicators
+- **SMTP Support**: Compatible with Gmail, Outlook, and enterprise email servers
+- **Slack Integration**: Real-time alerts via Slack webhooks with rich formatting
+- **Multi-Recipient**: Send alerts to multiple email addresses and Slack channels
+- **Threat Level Filtering**: Configure minimum severity levels for notifications
+- **Rate Limiting**: Prevent notification spam with configurable alert limits
+- **Rich Content**: Detailed alert information including:
+  - Threat severity with color coding
+  - Timestamp and source information
+  - IP addresses and attack vectors
+  - Actionable security recommendations
+- **Test Functionality**: Built-in test buttons to verify configuration
+- **Settings Management**: Web-based configuration interface for all notification settings
+
+### File Upload Processing 📤
+
+- **Remote Log Analysis**: Upload log files from remote systems
+- **Drag & Drop Interface**: Modern file upload with progress indicators
+- **Multi-format Support**: Process .log, .txt, and .out files
+- **Batch Processing**: Analyze large log files efficiently
+- **Source Tracking**: Identify which uploaded file triggered each alert
+- **Real-time Integration**: Uploaded file alerts integrate with live monitoring
+
 ---
 
 ## 📁 Project Structure
@@ -56,15 +110,23 @@ logsentinel/
 ├── parser.py              # Log parsing and detection algorithms
 ├── db.py                  # SQLite database operations
 ├── monitor.py             # Real-time file monitoring system
+├── notifications.py       # Email and Slack notification system
 ├── migrate_db.py          # Database migration utility
 ├── test_realtime.py       # Real-time monitoring test script
+├── test_notifications.py  # Notification system test script
 ├── requirements.txt       # Python dependencies
+├── notification_config.json # Notification settings (auto-created)
 ├── templates/
-│   └── dashboard.html     # Modern web dashboard with live alerts
+│   ├── base.html          # Shared template with navigation
+│   ├── dashboard.html     # Modern web dashboard with live alerts
+│   ├── upload.html        # File upload interface
+│   ├── uploads.html       # Uploaded file management
+│   └── settings.html      # Notification configuration interface
 ├── static/
-│   └── style.css          # Beautiful CSS styling
+│   └── style.css          # Beautiful CSS styling with responsive design
 ├── logs/
 │   └── sample_auth.log    # Sample system log file
+├── uploads/               # Directory for uploaded log files
 └── suspicious_logs.db     # SQLite database (auto-created)
 ```
 
@@ -157,6 +219,46 @@ python main.py
 ```
 
 You will see suspicious entries printed to console and stored in `suspicious_logs.db`.
+
+---
+
+## 🔔 Notification Setup
+
+### Configuring Email Alerts
+
+1. **Access Settings**: Navigate to the Settings page in the web dashboard
+2. **Email Configuration**:
+   - Enter your SMTP server details (e.g., `smtp.gmail.com`)
+   - Configure port (usually 587 for TLS or 465 for SSL)
+   - Add your email credentials
+   - Specify recipient email addresses (comma-separated)
+   - Enable TLS/SSL as needed
+3. **Test Configuration**: Click "Send Test Email" to verify setup
+4. **Enable Notifications**: Check "Enable Email Notifications"
+
+### Configuring Slack Alerts
+
+1. **Create Slack Webhook**:
+   - Go to [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks)
+   - Create a new webhook for your workspace
+   - Choose the channel for security alerts
+   - Copy the webhook URL
+
+2. **Configure in LogSentinel**:
+   - Navigate to Settings → Slack tab
+   - Paste your webhook URL
+   - Set the channel (e.g., `#security-alerts`)
+   - Customize the bot username (optional)
+   - Click "Send Test Message" to verify
+   - Enable Slack notifications
+
+### Notification Features
+
+- **Threat Level Filtering**: Set minimum severity for notifications
+- **Rate Limiting**: Configure maximum alerts per hour
+- **Rich Formatting**: Professional HTML emails and Slack messages
+- **Real-time Delivery**: Instant notifications for both monitoring and file uploads
+- **Multi-channel**: Send to both email and Slack simultaneously
 
 ---
 
@@ -314,7 +416,7 @@ Watch the dashboard for real-time alerts as the test script adds suspicious entr
 - ✅ ~~Interactive log management~~ **COMPLETED**
 - ✅ ~~Real-time log monitoring with file watchers~~ **COMPLETED**
 - ✅ ~~Log upload interface for remote files~~ **COMPLETED**
-- 🔄 Email/Slack alert notifications
+- ✅ ~~Email/Slack alert notifications~~ **COMPLETED**
 - 🔄 Advanced pattern matching with regex builder
 - 🔄 Windows Event Log support
 - 🔄 Multi-file monitoring dashboard
@@ -326,13 +428,15 @@ Watch the dashboard for real-time alerts as the test script adds suspicious entr
 
 ### **Phase 1: Essential Enterprise Features (Short-term)**
 
-#### **🔔 Notification System**
+#### **🔔 Advanced Notification Features**
 
-- **Email Alerts**: Configurable email notifications for critical threats
-- **Slack Integration**: Real-time alerts to security team channels
-- **Discord Webhooks**: Community-friendly notification support
-- **SMS Alerts**: Critical incident notifications via text message
-- **Webhook Support**: Generic webhook endpoints for SIEM integration
+- ✅ **Email Alerts**: Configurable email notifications for critical threats **COMPLETED**
+- ✅ **Slack Integration**: Real-time alerts to security team channels **COMPLETED**
+- 🔄 **Discord Webhooks**: Community-friendly notification support
+- 🔄 **SMS Alerts**: Critical incident notifications via text message
+- 🔄 **Webhook Support**: Generic webhook endpoints for SIEM integration
+- 🔄 **Alert Templates**: Custom notification templates with variables
+- 🔄 **Alert Escalation**: Multi-tier notification based on threat persistence
 
 #### **🏢 Multi-Platform Support**
 
