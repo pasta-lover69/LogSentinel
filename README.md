@@ -11,10 +11,11 @@ A comprehensive Python-based security log monitoring tool with a modern web dash
 ## 🎉 Recent Updates
 
 ### Version 2.0 - Notification System Release
+
 **Latest Enhancement: Comprehensive Email & Slack Notifications**
 
 - ✨ **Email Notifications**: Professional HTML email alerts with threat severity indicators
-- ✨ **Slack Integration**: Rich Slack messages with emoji indicators and threat details  
+- ✨ **Slack Integration**: Rich Slack messages with emoji indicators and threat details
 - ✨ **Settings Interface**: Beautiful web-based configuration for all notification settings
 - ✨ **Test Functionality**: Built-in test buttons to verify email and Slack configuration
 - ✨ **Rate Limiting**: Configurable alert limits to prevent notification spam
@@ -23,6 +24,7 @@ A comprehensive Python-based security log monitoring tool with a modern web dash
 - ✨ **Enhanced UI**: Added Settings page with tabbed interface for notification management
 
 **What's New:**
+
 - Navigate to **Settings** in the web dashboard to configure notifications
 - Real-time alerts now send both email and Slack notifications instantly
 - File upload processing triggers notifications for detected threats
@@ -239,6 +241,7 @@ You will see suspicious entries printed to console and stored in `suspicious_log
 ### Configuring Slack Alerts
 
 1. **Create Slack Webhook**:
+
    - Go to [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks)
    - Create a new webhook for your workspace
    - Choose the channel for security alerts
