@@ -1,0 +1,678 @@
+{% extends "base.html" %} {% block title %}Advanced Regex Builder -
+LogSentinel{% endblock %} {% block extra_css %}
+<style>
+  .security-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-left: 10px;
+  }
+
+  .security-badge.protected {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .threat-level-1 {
+    background-color: #d1ecf1;
+    color: #0c5460;
+  }
+  .threat-level-2 {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  .threat-level-3 {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  .threat-level-4 {
+    background-color: #f5c6cb;
+    color: #491217;
+  }
+
+  .pattern-test-area {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .match-highlight {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 2px;
+    display: inline-block;
+  }
+
+  .security-info {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+  }
+
+  .rate-limit-info {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: 10px;
+  }
+
+  .validation-error {
+    color: #dc3545;
+    font-size: 0.9em;
+    margin-top: 5px;
+  }
+
+  .execution-stats {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <h2>
+        <i class="fas fa-code"></i> Advanced Regex Builder
+        <span class="security-badge protected">
+          <i class="fas fa-shield-alt"></i> Security Protected
+        </span>
+      </h2>
+
+      <div class="security-info">
+        <h6><i class="fas fa-info-circle"></i> Security Features Active</h6>
+        <ul class="mb-0">
+          <li>
+            <strong>CSRF Protection:</strong> All forms protected against
+            cross-site request forgery
+          </li>
+          <li>
+            <strong>Rate Limiting:</strong> Maximum 10 requests per minute per
+            IP
+          </li>
+          <li>
+            <strong>Pattern Validation:</strong> ReDoS protection and complexity
+            analysis
+          </li>
+          <li>
+            <strong>Input Sanitization:</strong> XSS prevention and safe HTML
+            encoding
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Pattern Creation Form -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>
+            <i class="fas fa-plus-circle"></i> Create New Security Pattern
+          </h5>
+        </div>
+        <div class="card-body">
+          <form id="patternForm" method="POST" action="/regex-builder/create">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="form-group">
+              <label for="patternName">Pattern Name *</label>
+              <input
+                type="text"
+                class="form-control"
+                id="patternName"
+                name="name"
+                maxlength="100"
+                pattern="[a-zA-Z0-9_\-\s]+"
+                required
+              />
+              <small class="form-text text-muted"
+                >Alphanumeric characters, spaces, hyphens, and underscores
+                only</small
+              >
+              <div class="validation-error" id="nameError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="patternRegex">Regex Pattern *</label>
+              <textarea
+                class="form-control"
+                id="patternRegex"
+                name="pattern"
+                rows="3"
+                maxlength="1000"
+                required
+                placeholder="Enter your regex pattern here..."
+              ></textarea>
+              <small class="form-text text-muted"
+                >Maximum 1000 characters. Patterns are validated for
+                security.</small
+              >
+              <div class="validation-error" id="patternError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="patternCategory">Threat Category *</label>
+              <select
+                class="form-control"
+                id="patternCategory"
+                name="category"
+                required
+              >
+                <option value="">Select category...</option>
+                <option value="brute_force">Brute Force Attack</option>
+                <option value="credential_stuffing">Credential Stuffing</option>
+                <option value="account_enumeration">Account Enumeration</option>
+                <option value="privilege_escalation">
+                  Privilege Escalation
+                </option>
+                <option value="sql_injection">SQL Injection</option>
+                <option value="xss_attempt">XSS Attempt</option>
+                <option value="command_injection">Command Injection</option>
+                <option value="path_traversal">Path Traversal</option>
+                <option value="failed_login">Failed Login</option>
+                <option value="suspicious_ip">Suspicious IP</option>
+              </select>
+              <div class="validation-error" id="categoryError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="threatLevel">Threat Level *</label>
+              <select
+                class="form-control"
+                id="threatLevel"
+                name="threat_level"
+                required
+              >
+                <option value="">Select threat level...</option>
+                <option value="1" class="threat-level-1">Low (1)</option>
+                <option value="2" class="threat-level-2">Medium (2)</option>
+                <option value="3" class="threat-level-3">High (3)</option>
+                <option value="4" class="threat-level-4">Critical (4)</option>
+              </select>
+              <div class="validation-error" id="threatLevelError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="patternDescription">Description</label>
+              <textarea
+                class="form-control"
+                id="patternDescription"
+                name="description"
+                rows="2"
+                maxlength="500"
+                placeholder="Describe what this pattern detects..."
+              ></textarea>
+              <small class="form-text text-muted">Maximum 500 characters</small>
+              <div class="validation-error" id="descriptionError"></div>
+            </div>
+
+            <div class="form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="caseSensitive"
+                name="case_sensitive"
+                value="true"
+              />
+              <label class="form-check-label" for="caseSensitive">
+                Case Sensitive Matching
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">
+              <i class="fas fa-plus"></i> Create Pattern
+            </button>
+
+            <div class="rate-limit-info">
+              <i class="fas fa-clock"></i> Rate limited: 10 requests per minute
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pattern Testing Area -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fas fa-vial"></i> Test Regex Pattern</h5>
+        </div>
+        <div class="card-body">
+          <form id="testForm" method="POST" action="/regex-builder/test">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="form-group">
+              <label for="testPattern">Test Pattern</label>
+              <textarea
+                class="form-control"
+                id="testPattern"
+                name="pattern"
+                rows="2"
+                maxlength="1000"
+                placeholder="Enter regex pattern to test..."
+              ></textarea>
+              <div class="validation-error" id="testPatternError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="testText">Test Text</label>
+              <textarea
+                class="form-control"
+                id="testText"
+                name="test_text"
+                rows="8"
+                maxlength="10000"
+                placeholder="Enter sample log text to test against..."
+              ></textarea>
+              <small class="form-text text-muted"
+                >Maximum 10,000 characters</small
+              >
+              <div class="validation-error" id="testTextError"></div>
+            </div>
+
+            <div class="form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="testCaseSensitive"
+                name="case_sensitive"
+                value="true"
+              />
+              <label class="form-check-label" for="testCaseSensitive">
+                Case Sensitive
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-3">
+              <i class="fas fa-play"></i> Test Pattern
+            </button>
+          </form>
+
+          <!-- Test Results -->
+          <div id="testResults" class="pattern-test-area" style="display: none">
+            <h6><i class="fas fa-search"></i> Test Results</h6>
+            <div class="execution-stats" id="executionStats"></div>
+            <div id="matchResults"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Existing Patterns -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fas fa-list"></i> Security Patterns Library</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="patternsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Threat Level</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pattern in patterns %}
+                <tr>
+                  <td>{{ pattern.name }}</td>
+                  <td>
+                    <span class="badge badge-secondary"
+                      >{{ pattern.category.replace('_', ' ').title() }}</span
+                    >
+                  </td>
+                  <td>
+                    <span class="badge threat-level-{{ pattern.threat_level }}">
+                      Level {{ pattern.threat_level }}
+                    </span>
+                  </td>
+                  <td>{{ pattern.description }}</td>
+                  <td>
+                    {% if pattern.enabled %}
+                    <span class="badge badge-success">Enabled</span>
+                    {% else %}
+                    <span class="badge badge-secondary">Disabled</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <button
+                        class="btn btn-sm btn-info"
+                        onclick="copyPattern('{{ pattern.name }}')"
+                      >
+                        <i class="fas fa-copy"></i>
+                      </button>
+                      <button
+                        class="btn btn-sm btn-warning"
+                        onclick="togglePattern('{{ pattern.name }}')"
+                      >
+                        <i class="fas fa-toggle-on"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Statistics -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fas fa-chart-bar"></i> Security Statistics</h5>
+        </div>
+        <div class="card-body" id="securityStats">
+          <!-- Will be populated via AJAX -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success/Error Modal -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Result</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Content will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Load security statistics
+    loadSecurityStats();
+
+    // Form submission handlers with CSRF protection
+    document
+      .getElementById("patternForm")
+      .addEventListener("submit", handlePatternSubmit);
+    document
+      .getElementById("testForm")
+      .addEventListener("submit", handleTestSubmit);
+
+    // Real-time validation
+    setupRealTimeValidation();
+  });
+
+  function handlePatternSubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    // Clear previous errors
+    clearValidationErrors();
+
+    fetch("/regex-builder/create", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showModal(
+            "Success",
+            `Pattern "${data.pattern_id}" created successfully!`,
+            "success"
+          );
+          form.reset();
+          location.reload(); // Refresh to show new pattern
+        } else {
+          if (data.errors) {
+            displayValidationErrors(data.errors);
+          }
+          showModal("Error", data.message, "error");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showModal("Error", "An unexpected error occurred.", "error");
+      });
+  }
+
+  function handleTestSubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    // Clear previous results
+    document.getElementById("testResults").style.display = "none";
+
+    fetch("/regex-builder/test", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          displayTestResults(data);
+        } else {
+          if (data.errors) {
+            displayTestErrors(data.errors);
+          }
+          showModal("Test Error", data.message, "error");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showModal(
+          "Error",
+          "An unexpected error occurred during testing.",
+          "error"
+        );
+      });
+  }
+
+  function displayTestResults(data) {
+    const resultsDiv = document.getElementById("testResults");
+    const statsDiv = document.getElementById("executionStats");
+    const matchDiv = document.getElementById("matchResults");
+
+    // Show execution stats
+    statsDiv.innerHTML = `
+        <strong>Execution Time:</strong> ${data.execution_time}ms<br>
+        <strong>Matches Found:</strong> ${data.matches.length}<br>
+        <strong>Status:</strong> ${data.message}
+    `;
+
+    // Show matches
+    if (data.matches.length > 0) {
+      let matchHtml = "<h6>Matches:</h6>";
+      data.matches.forEach((match, index) => {
+        matchHtml += `
+                <div class="match-highlight" title="Position: ${match.start}-${
+          match.end
+        }">
+                    <strong>Match ${index + 1}:</strong> ${match.text}
+                    ${
+                      match.groups.length > 0
+                        ? `<br><small>Groups: ${match.groups.join(
+                            ", "
+                          )}</small>`
+                        : ""
+                    }
+                </div>
+            `;
+      });
+      matchDiv.innerHTML = matchHtml;
+    } else {
+      matchDiv.innerHTML = '<p class="text-muted">No matches found.</p>';
+    }
+
+    resultsDiv.style.display = "block";
+  }
+
+  function setupRealTimeValidation() {
+    // Pattern name validation
+    document
+      .getElementById("patternName")
+      .addEventListener("input", function () {
+        const name = this.value;
+        const errorDiv = document.getElementById("nameError");
+
+        if (name.length > 100) {
+          errorDiv.textContent = "Name too long (max 100 characters)";
+        } else if (!/^[a-zA-Z0-9_\-\s]*$/.test(name)) {
+          errorDiv.textContent =
+            "Only alphanumeric characters, spaces, hyphens, and underscores allowed";
+        } else {
+          errorDiv.textContent = "";
+        }
+      });
+
+    // Pattern validation
+    document
+      .getElementById("patternRegex")
+      .addEventListener("input", function () {
+        const pattern = this.value;
+        const errorDiv = document.getElementById("patternError");
+
+        if (pattern.length > 1000) {
+          errorDiv.textContent = "Pattern too long (max 1000 characters)";
+        } else {
+          errorDiv.textContent = "";
+        }
+      });
+  }
+
+  function clearValidationErrors() {
+    const errorDivs = document.querySelectorAll(".validation-error");
+    errorDivs.forEach((div) => (div.textContent = ""));
+  }
+
+  function displayValidationErrors(errors) {
+    Object.keys(errors).forEach((field) => {
+      const errorDiv = document.getElementById(field + "Error");
+      if (errorDiv) {
+        errorDiv.textContent = errors[field];
+      }
+    });
+  }
+
+  function displayTestErrors(errors) {
+    Object.keys(errors).forEach((field) => {
+      const errorDiv = document.getElementById(
+        "test" + field.charAt(0).toUpperCase() + field.slice(1) + "Error"
+      );
+      if (errorDiv) {
+        errorDiv.textContent = errors[field];
+      }
+    });
+  }
+
+  function showModal(title, message, type) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalBody").innerHTML = `
+        <div class="alert alert-${type === "success" ? "success" : "danger"}">
+            ${message}
+        </div>
+    `;
+    $("#resultModal").modal("show");
+  }
+
+  function loadSecurityStats() {
+    fetch("/regex-builder/stats")
+      .then((response) => response.json())
+      .then((data) => {
+        const statsDiv = document.getElementById("securityStats");
+        statsDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h4 class="text-primary">${data.total_patterns}</h4>
+                        <small>Total Patterns</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h4 class="text-success">${data.enabled_patterns}</h4>
+                        <small>Active Patterns</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h4 class="text-warning">${
+                          data.patterns_blocked || 0
+                        }</h4>
+                        <small>Patterns Blocked</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h4 class="text-info">${
+                          data.patterns_executed || 0
+                        }</h4>
+                        <small>Patterns Executed</small>
+                    </div>
+                </div>
+            </div>
+        `;
+      })
+      .catch((error) => {
+        console.error("Error loading stats:", error);
+      });
+  }
+
+  function copyPattern(patternName) {
+    // Implementation to copy pattern to test form
+    showModal(
+      "Info",
+      `Pattern "${patternName}" copied to test form`,
+      "success"
+    );
+  }
+
+  function togglePattern(patternName) {
+    // Implementation to enable/disable pattern
+    showModal("Info", `Pattern "${patternName}" toggled`, "success");
+  }
+</script>
+{% endblock %}
