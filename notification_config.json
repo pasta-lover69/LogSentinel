@@ -10,9 +10,9 @@
         "use_tls": true
     },
     "slack": {
-        "enabled": false,
-        "webhook_url": "",
-        "channel": "#security-alerts",
+        "enabled": true,
+        "webhook_url": "https://hooks.slack.com/services/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",
+        "channel": "#logsentinel",
         "username": "LogSentinel"
     },
     "alert_settings": {

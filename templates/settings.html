@@ -316,3 +316,29 @@ function showAlert(message, type) {
 }
 </script>
 {% endblock %}
+
+<style>
+.nav-tabs .nav-link {
+    color: #000000 !important; /* Changed to black */
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-bottom-color: transparent;
+    font-weight: 500;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #000000 !important; /* Keep black on hover */
+    background-color: #e9ecef;
+    border-color: #dee2e6 #dee2e6 #fff;
+    text-decoration: none;
+}
+
+.nav-tabs .nav-link.active {
+    color: #000000 !important; /* Keep black when active */
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    font-weight: 600;
+}
+</style>
