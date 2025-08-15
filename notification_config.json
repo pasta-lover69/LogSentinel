@@ -1,12 +1,16 @@
 {
     "email": {
-        "enabled": false,
-        "smtp_server": "",
+        "enabled": true,
+        "smtp_server": "smtp.gmail.com",
         "smtp_port": 587,
-        "username": "",
-        "password": "",
-        "from_email": "",
-        "to_emails": [],
+        "username": "pastalover6999@gmail.com",
+        "password": "dddz bamf hfqn tmvp",
+        "from_email": "pastalover6999@gmail.com",
+        "to_emails": [
+            "dhell7224@gmail.com",
+            "jayvienmocallay7@gmail.com",
+            "jayvienmocallay8@gmail.com"
+        ],
         "use_tls": true
     },
     "slack": {
