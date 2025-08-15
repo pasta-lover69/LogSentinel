@@ -8,6 +8,9 @@ from datetime import datetime
 import os
 import atexit
 import json
+from regex_builder import (
+    SecureRegexBuilder, CSRFProtection, rate_limit, csrf_protect
+)
 
 app = Flask(__name__)
 app.secret_key = 'LogSentByJeb'
@@ -457,6 +460,67 @@ def delete_upload(filename):
         flash(f'Error deleting file: {str(e)}', 'error')
     
     return redirect(url_for('uploaded_files'))
+
+@app.route('/regex-builder')
+@rate_limit(max_requests=20, window=60)
+def regex_builder():
+    """Secure regex builder interface"""
+    builder = SecureRegexBuilder()
+    patterns = builder.get_patterns()
+    
+    return render_template('regex_builder.html', 
+                         patterns=patterns,
+                         csrf_token=CSRFProtection.generate_csrf_token)
+
+@app.route('/regex-builder/create', methods=['POST'])
+@csrf_protect
+@rate_limit(max_requests=5, window=60)
+def create_pattern():
+    """Create new security pattern with validation"""
+    builder = SecureRegexBuilder()
+    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+    
+    form_data = request.form.to_dict()
+    form_data['case_sensitive'] = 'case_sensitive' in request.form
+    
+    result = builder.create_pattern(form_data, client_ip)
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify(result)
+    
+    if result['success']:
+        flash(result['message'], 'success')
+    else:
+        flash(result['message'], 'error')
+    
+    return redirect(url_for('regex_builder'))
+
+@app.route('/regex-builder/test', methods=['POST'])
+@csrf_protect
+@rate_limit(max_requests=10, window=60)
+def test_pattern():
+    """Test regex pattern with security validation"""
+    builder = SecureRegexBuilder()
+    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+    
+    form_data = request.form.to_dict()
+    form_data['case_sensitive'] = 'case_sensitive' in request.form
+    
+    result = builder.test_pattern(form_data, client_ip)
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify(result)
+    
+    return redirect(url_for('regex_builder'))
+
+@app.route('/regex-builder/stats')
+@rate_limit(max_requests=30, window=60)
+def regex_stats():
+    """Get regex builder security statistics"""
+    builder = SecureRegexBuilder()
+    stats = builder.get_security_stats()
+    
+    return jsonify(stats)
 
 if __name__ == '__main__':
     init_db()
