@@ -1,160 +1,170 @@
-{% extends "base.html" %}
-
-{% block title %}Upload Logs - LogSentinel{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Upload Logs - LogSentinel{% endblock
+%} {% block content %}
 <div class="upload-container">
-    <div class="text-center mb-4">
-        <h2><i class="fas fa-upload"></i> Upload Log Files</h2>
-        <p class="text-muted">Upload your log files for analysis and threat detection</p>
+  <div class="text-center mb-4">
+    <h2><i class="fas fa-upload"></i> Upload Log Files</h2>
+    <p class="text-muted">
+      Upload your log files for analysis and threat detection
+    </p>
+  </div>
+
+  <!-- Upload Requirements -->
+  <div class="alert alert-warning">
+    <h6><i class="fas fa-info-circle"></i> Upload Requirements:</h6>
+    <ul class="mb-0">
+      <li>Supported formats: .log, .txt, .out</li>
+      <li>Maximum file size: 16MB</li>
+      <li>Files will be automatically analyzed for suspicious activities</li>
+    </ul>
+  </div>
+
+  <!-- Upload Form -->
+  <form method="POST" enctype="multipart/form-data" id="uploadForm">
+    <div class="drag-drop-area" id="dropArea">
+      <div class="upload-icon">
+        <i class="fas fa-cloud-upload-alt"></i>
+      </div>
+      <div class="upload-text">
+        <strong>Drag & Drop your log files here</strong>
+      </div>
+      <div class="upload-hint">or click to browse files</div>
+      <input
+        type="file"
+        id="fileInput"
+        name="file"
+        class="file-input"
+        accept=".log,.txt,.out"
+        required
+      />
     </div>
 
-    <!-- Upload Requirements -->
-    <div class="alert alert-warning">
-        <h6><i class="fas fa-info-circle"></i> Upload Requirements:</h6>
-        <ul class="mb-0">
-            <li>Supported formats: .log, .txt, .out</li>
-            <li>Maximum file size: 16MB</li>
-            <li>Files will be automatically analyzed for suspicious activities</li>
-        </ul>
+    <!-- File Info Display -->
+    <div class="file-info" id="fileInfo">
+      <div class="d-flex align-items-center">
+        <i class="fas fa-file-alt me-3"></i>
+        <div>
+          <div class="file-name" id="fileName"></div>
+          <div class="file-size" id="fileSize"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Upload Form -->
-    <form method="POST" enctype="multipart/form-data" id="uploadForm">
-        <div class="drag-drop-area" id="dropArea">
-            <div class="upload-icon">
-                <i class="fas fa-cloud-upload-alt"></i>
-            </div>
-            <div class="upload-text">
-                <strong>Drag & Drop your log files here</strong>
-            </div>
-            <div class="upload-hint">
-                or click to browse files
-            </div>
-            <input type="file" id="fileInput" name="file" class="file-input" accept=".log,.txt,.out" required>
-        </div>
+    <!-- Upload Progress -->
+    <div class="upload-progress" id="uploadProgress">
+      <div class="progress">
+        <div
+          class="progress-bar"
+          id="progressBar"
+          role="progressbar"
+          style="width: 0%"
+        ></div>
+      </div>
+      <div class="text-center mt-2">
+        <small class="text-muted">Uploading and analyzing...</small>
+      </div>
+    </div>
 
-        <!-- File Info Display -->
-        <div class="file-info" id="fileInfo">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-file-alt me-3"></i>
-                <div>
-                    <div class="file-name" id="fileName"></div>
-                    <div class="file-size" id="fileSize"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Upload Progress -->
-        <div class="upload-progress" id="uploadProgress">
-            <div class="progress">
-                <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
-            </div>
-            <div class="text-center mt-2">
-                <small class="text-muted">Uploading and analyzing...</small>
-            </div>
-        </div>
-
-        <!-- Submit Button -->
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-custom btn-lg" id="submitBtn">
-                <i class="fas fa-upload me-2"></i>Upload & Analyze
-            </button>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg ms-3">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
-        </div>
-    </form>
+    <!-- Submit Button -->
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-custom btn-lg" id="submitBtn">
+        <i class="fas fa-upload me-2"></i>Upload & Analyze
+      </button>
+      <a
+        href="{{ url_for('dashboard') }}"
+        class="btn btn-outline-secondary btn-lg ms-3"
+      >
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+      </a>
+    </div>
+  </form>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-const dropArea = document.getElementById('dropArea');
-const fileInput = document.getElementById('fileInput');
-const fileInfo = document.getElementById('fileInfo');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
-const uploadForm = document.getElementById('uploadForm');
-const submitBtn = document.getElementById('submitBtn');
-const uploadProgress = document.getElementById('uploadProgress');
-const progressBar = document.getElementById('progressBar');
+  const dropArea = document.getElementById("dropArea");
+  const fileInput = document.getElementById("fileInput");
+  const fileInfo = document.getElementById("fileInfo");
+  const fileName = document.getElementById("fileName");
+  const fileSize = document.getElementById("fileSize");
+  const uploadForm = document.getElementById("uploadForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const uploadProgress = document.getElementById("uploadProgress");
+  const progressBar = document.getElementById("progressBar");
 
-// Drag and drop functionality
-dropArea.addEventListener('click', () => fileInput.click());
-dropArea.addEventListener('dragover', handleDragOver);
-dropArea.addEventListener('dragleave', handleDragLeave);
-dropArea.addEventListener('drop', handleDrop);
+  // Drag and drop functionality
+  dropArea.addEventListener("click", () => fileInput.click());
+  dropArea.addEventListener("dragover", handleDragOver);
+  dropArea.addEventListener("dragleave", handleDragLeave);
+  dropArea.addEventListener("drop", handleDrop);
 
-fileInput.addEventListener('change', handleFileSelect);
+  fileInput.addEventListener("change", handleFileSelect);
 
-function handleDragOver(e) {
+  function handleDragOver(e) {
     e.preventDefault();
-    dropArea.classList.add('dragover');
-}
+    dropArea.classList.add("dragover");
+  }
 
-function handleDragLeave(e) {
+  function handleDragLeave(e) {
     e.preventDefault();
-    dropArea.classList.remove('dragover');
-}
+    dropArea.classList.remove("dragover");
+  }
 
-function handleDrop(e) {
+  function handleDrop(e) {
     e.preventDefault();
-    dropArea.classList.remove('dragover');
+    dropArea.classList.remove("dragover");
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-        fileInput.files = files;
-        displayFileInfo(files[0]);
+      fileInput.files = files;
+      displayFileInfo(files[0]);
     }
-}
+  }
 
-function handleFileSelect(e) {
+  function handleFileSelect(e) {
     const file = e.target.files[0];
     if (file) {
-        displayFileInfo(file);
+      displayFileInfo(file);
     }
-}
+  }
 
-function displayFileInfo(file) {
+  function displayFileInfo(file) {
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
-    fileInfo.style.display = 'block';
-}
+    fileInfo.style.display = "block";
+  }
 
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
+  function formatFileSize(bytes) {
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }
 
-// Form submission with progress
-uploadForm.addEventListener('submit', function(e) {
+  // Form submission with progress
+  uploadForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    
+
     if (!fileInput.files[0]) {
-        alert('Please select a file to upload.');
-        return;
+      alert("Please select a file to upload.");
+      return;
     }
-    
+
     // Show progress
-    uploadProgress.style.display = 'block';
+    uploadProgress.style.display = "block";
     submitBtn.disabled = true;
-    
+
     // Simulate progress (in real implementation, use XMLHttpRequest for actual progress)
     let progress = 0;
     const interval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress > 90) progress = 90;
-        progressBar.style.width = progress + '%';
-        
-        if (progress >= 90) {
-            clearInterval(interval);
-            // Submit the actual form
-            uploadForm.submit();
-        }
+      progress += Math.random() * 30;
+      if (progress > 90) progress = 90;
+      progressBar.style.width = progress + "%";
+
+      if (progress >= 90) {
+        clearInterval(interval);
+        // Submit the actual form
+        uploadForm.submit();
+      }
     }, 200);
-});
+  });
 </script>
 {% endblock %}
